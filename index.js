@@ -150,6 +150,9 @@ window.onload = function() {
             timer_html.append(digit)
         }
         game.start_time = new Date().getTime()
+        if (game.interval_timer){
+            clearInterval(game.interval_timer)
+        }
         game.interval_timer = setInterval(updateTimer, 6)
 
     }
