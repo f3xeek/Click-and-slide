@@ -32,6 +32,10 @@
     font-size: 100px;
     cursor: pointer;
 }
+.saveStateButtons{
+    margin-top: 10px; ;
+    margin-bottom: 10px; ;
+}
 
 #imageScroll {
     width: 300px;
@@ -43,13 +47,24 @@
     padding: 0;
     margin: 0;
 }
-#popup{
-    display: none;
+.popup {
+    color: aliceblue;
+    display:none;
     position: absolute;
+    text-align: center;
     top: 30vh;
-    left: 45vw;
-    width: 200px;
-    height: 200px;
-    background: gray;
+    left: 30vw;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    background-color: gray;
+    height: 200px; 
+    width: 600px; 
     z-index: 200;
+}
+table{
+    border-collapse: collapse;
+}
+td{
+    padding: 10px;
 }

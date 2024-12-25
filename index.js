@@ -1,5 +1,5 @@
 window.onload = function() {
-    const game = {
+    let game = {
         images: ["mc.jpg", "sally.jpg", "zlomek.jpg"],
         imageId: 0,
         imageStartedId: 0,
@@ -8,14 +8,51 @@ window.onload = function() {
         board: [],
         remaining: 0,
         pos0: 0,
+        start_time:0,
         shuffle_int: null,
         running:false
     }
-
+    document.getElementById("saveButton").addEventListener("click", ()=>{
+        document.getElementById("popupSaveButton").addEventListener("click", ()=>{
+            document.getElementById("popupSave").style.display = "none"
+        })
+        document.getElementById("popupTable").querySelectorAll("tr").forEach((row, index) => {
+            if (index > 0) {
+                row.remove();
+            }
+        });
+        for(let i =0;i<=2;i++){
+            let state = window.localStorage.getItem("board"+i)
+            let row = document.createElement("tr")
+            let Lp = document.createElement("td")
+            Lp.innerText= i
+            let name = document.createElement("td")
+            name.innerText = state?state.name:"Placeholder"
+            row.append(Lp, name)
+            document.getElementById("popupTable").append(row)
+        }
+        document.getElementById("popupSave").style.display = "flex"
+        window.localStorage.setItem("board1", JSON.stringify({board:game.board,
+            imageStartedId:game.imageStartedId,
+            mode: game.mode,
+            pos0:game.pos0,
+            start_time:new Date().getTime()-game.start_time}))
+    })
+    document.getElementById("loadButton").addEventListener("click", ()=>{
+        start_game()
+        let loadedData = JSON.parse(window.localStorage.getItem("board1"))
+        
+        game.board = loadedData.board
+        game.imageStartedId = loadedData.imageStartedId
+        game.mode = loadedData.mode
+        game.pos0 = loadedData.pos0
+        game.start_time = new Date().getTime() - loadedData.start_time
+        game.running = true
+        draw()
+    })
     document.getElementById("imageScroll").scrollTo(game.dimensions, 0)
     const arrowRight = document.getElementById("arrowRight")
     const arrowLeft = document.getElementById("arrowLeft")
-    const mainImg = document.getElementById("mainImg")
     arrowLeft.addEventListener("click", () => {
         let i = 0
         let scrollInterval = setInterval(()=>{
@@ -97,10 +134,10 @@ window.onload = function() {
                         let time = ms2time(new Date().getTime() -game.start_time)
                         updateTimer(time)
                         clearInterval(game.interval_timer)
-                        document.getElementById("popup").style.display = "block"
+                        document.getElementById("popupWin").style.display = "block"
                         document.getElementById("popupTimer").innerText = `Twój czas to: ${time}`
                         document.getElementById("popupButton").addEventListener("click", ()=>{
-                            document.getElementById("popup").style.display = "none"
+                            document.getElementById("popupWin").style.display = "none"
                         })
                     }
             }})
@@ -181,6 +218,7 @@ window.onload = function() {
             clearInterval(game.shuffle_int)
             game.shuffle_int = null
             start_game()
+            document.getElementById("saveButton").removeAttribute("disabled")
         }
 
     }
