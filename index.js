@@ -12,44 +12,125 @@ window.onload = function() {
         shuffle_int: null,
         running:false
     }
+    document.getElementById("popupLoadButton").addEventListener("click", ()=>{
+        document.getElementById("popupLoad").style.display = "none"
+        game.running=true
+        console.log(game.start_time)
+        game.start_time = new Date().getTime() - game.start_time
+        console.log(game.start_time)
+        game.interval_timer = setInterval(updateTimer, 6)
+    })
+    document.getElementById("popupSaveButton").addEventListener("click", ()=>{
+        document.getElementById("popupSave").style.display = "none"
+        game.running=true
+        console.log(game.start_time)
+        game.start_time = new Date().getTime() - game.start_time
+        console.log(game.start_time)
+        game.interval_timer = setInterval(updateTimer, 6)
+        
+    })
     document.getElementById("saveButton").addEventListener("click", ()=>{
-        document.getElementById("popupSaveButton").addEventListener("click", ()=>{
-            document.getElementById("popupSave").style.display = "none"
-        })
-        document.getElementById("popupTable").querySelectorAll("tr").forEach((row, index) => {
+        game.running= false
+        let time = ms2time(new Date().getTime() -game.start_time)
+        game.start_time = new Date().getTime() - game.start_time
+        updateTimer(time)
+        clearInterval(game.interval_timer)
+        document.getElementById("popupSaveTable").querySelectorAll("tr").forEach((row, index) => {
             if (index > 0) {
                 row.remove();
             }
         });
-        for(let i =0;i<=2;i++){
-            let state = window.localStorage.getItem("board"+i)
+        for(let i =1;i<=3;i++){
+            let state = JSON.parse(window.localStorage.getItem("board"+i))
             let row = document.createElement("tr")
             let Lp = document.createElement("td")
-            Lp.innerText= i
-            let name = document.createElement("td")
-            name.innerText = state?state.name:"Placeholder"
-            row.append(Lp, name)
-            document.getElementById("popupTable").append(row)
+            let buttonCel = document.createElement("td")
+            let button = document.createElement("button")
+            let name = document.createElement("input")
+            let nameCel = document.createElement("td")
+
+            buttonCel.append(button)
+            button.innerText = "Save"
+
+            button.addEventListener("click", ()=>{
+                game.running=true
+                console.log(game.start_time)
+                game.start_time = new Date().getTime() - game.start_time
+                console.log(game.start_time)
+                game.interval_timer = setInterval(updateTimer, 6)
+                document.getElementById("popupSave").style.display = "none"
+                window.localStorage.setItem(`board${i}`, JSON.stringify({
+                    name:document.getElementById(`saveInput${i}`).value!=''?document.getElementById(`saveInput${i}`).value:"Insert your name here",
+                    board:game.board,
+                    imageStartedId:game.imageStartedId,
+                    mode: game.mode,
+                    pos0:game.pos0,
+                    date:new Date().getTime(),
+                    start_time:new Date().getTime()-game.start_time}))
+            })
+            
+            Lp.innerText = i
+            nameCel.append(name)
+            name.value = state?state.name:"Insert your name here"
+            name.id = `saveInput${i}`
+
+            row.append(Lp, name, buttonCel)
+            document.getElementById("popupSaveTable").append(row)
         }
         document.getElementById("popupSave").style.display = "flex"
-        window.localStorage.setItem("board1", JSON.stringify({board:game.board,
-            imageStartedId:game.imageStartedId,
-            mode: game.mode,
-            pos0:game.pos0,
-            start_time:new Date().getTime()-game.start_time}))
     })
     document.getElementById("loadButton").addEventListener("click", ()=>{
-        start_game()
-        let loadedData = JSON.parse(window.localStorage.getItem("board1"))
-        
-        game.board = loadedData.board
-        game.imageStartedId = loadedData.imageStartedId
-        game.mode = loadedData.mode
-        game.pos0 = loadedData.pos0
-        game.start_time = new Date().getTime() - loadedData.start_time
-        game.running = true
-        draw()
+        game.running= false
+        let time = ms2time(new Date().getTime() -game.start_time)
+        game.start_time = new Date().getTime() - game.start_time
+        updateTimer(time)
+        clearInterval(game.interval_timer)
+        document.getElementById("popupLoadTable").querySelectorAll("tr").forEach((row, index) => {
+            if (index > 0) {
+                row.remove();
+            }
+        });
+        for(let i =1;i<=3;i++){
+            let state = JSON.parse(window.localStorage.getItem("board"+i))
+            let row = document.createElement("tr")
+            let Lp = document.createElement("td")
+            let buttonCel = document.createElement("td")
+            let button = document.createElement("button")
+            let name = document.createElement("td")
+            let mode = document.createElement("td")
+            let time  = document.createElement("td")
+            let date = document.createElement("td")
+
+            date.innerText = state?ms2date(state.date):"Null"
+            mode.innerText = state?`${state.mode}x${state.mode}`:"Null"
+            time.innerText = state?ms2time(state.start_time):"Null"
+
+            buttonCel.append(button)
+            button.innerText = "Load"
+
+            button.addEventListener("click", ()=>{
+                document.getElementById("popupLoad").style.display = "none"
+                start_game()
+                
+                game.board = state.board
+                game.imageStartedId = state.imageStartedId
+                game.mode = state.mode
+                game.pos0 = state.pos0
+                game.start_time = new Date().getTime() - state.start_time
+                game.running = true
+                draw()
+            })
+            
+            Lp.innerText = i
+            
+            name.innerText = state?state.name:"NoName"
+
+            row.append(Lp, name,  time, date, mode,buttonCel,)
+            document.getElementById("popupLoadTable").append(row)
+        }
+        document.getElementById("popupLoad").style.display = "flex"
     })
+
     document.getElementById("imageScroll").scrollTo(game.dimensions, 0)
     const arrowRight = document.getElementById("arrowRight")
     const arrowLeft = document.getElementById("arrowLeft")
@@ -201,6 +282,10 @@ window.onload = function() {
             milliseconds = String(time).slice(-3);
 
         return pad(hours, 2) + ':' + pad(minutes, 2) + ':' + pad(seconds, 2) + '.' + pad(milliseconds, 3);
+    }
+    function ms2date(time) {
+        data = new Date(time)
+        return String(data.getDate()).padStart(2,"0")+'.'+String(data.getMonth()).padStart(2,"0")+'.'+String(data.getFullYear()).padStart(2,"0")
     }
     function shuffle() {
         pos0 = game.pos0
