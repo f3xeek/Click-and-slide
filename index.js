@@ -1,5 +1,5 @@
 window.onload = function() {
-    let game = {
+    const game = {
         images: ["mc.jpg", "sally.jpg", "zlomek.jpg"],
         imageId: 0,
         imageStartedId: 0,
@@ -8,180 +8,156 @@ window.onload = function() {
         board: [],
         remaining: 0,
         pos0: 0,
-        start_time:0,
+        start_time: 0,
         shuffle_int: null,
-        running:false
+        running: false
+    };
+
+    function hidePopupAndResume(popupId) {
+        document.getElementById(popupId).style.display = "none";
+        game.running = true;
+        game.start_time = new Date().getTime() - game.start_time;
+        game.interval_timer = setInterval(updateTimer, 6);
     }
-    document.getElementById("popupLoadButton").addEventListener("click", ()=>{
-        document.getElementById("popupLoad").style.display = "none"
-        game.running=true
-        console.log(game.start_time)
-        game.start_time = new Date().getTime() - game.start_time
-        console.log(game.start_time)
-        game.interval_timer = setInterval(updateTimer, 6)
-    })
-    document.getElementById("popupSaveButton").addEventListener("click", ()=>{
-        document.getElementById("popupSave").style.display = "none"
-        game.running=true
-        console.log(game.start_time)
-        game.start_time = new Date().getTime() - game.start_time
-        console.log(game.start_time)
-        game.interval_timer = setInterval(updateTimer, 6)
-        
-    })
-    document.getElementById("saveButton").addEventListener("click", ()=>{
-        game.running= false
-        let time = ms2time(new Date().getTime() -game.start_time)
-        game.start_time = new Date().getTime() - game.start_time
-        updateTimer(time)
-        clearInterval(game.interval_timer)
-        document.getElementById("popupSaveTable").querySelectorAll("tr").forEach((row, index) => {
-            if (index > 0) {
-                row.remove();
-            }
+
+    function clearAndPopulateTable(popupTableId, isSave) {
+        const table = document.getElementById(popupTableId);
+        table.querySelectorAll("tr").forEach((row, index) => {
+            if (index > 0) row.remove();
         });
-        for(let i =1;i<=3;i++){
-            let state = JSON.parse(window.localStorage.getItem("board"+i))
-            let row = document.createElement("tr")
-            let Lp = document.createElement("td")
-            let buttonCel = document.createElement("td")
-            let button = document.createElement("button")
-            let name = document.createElement("input")
-            let nameCel = document.createElement("td")
 
-            buttonCel.append(button)
-            button.innerText = "Save"
+        for (let i = 1; i <= 3; i++) {
+            const state = JSON.parse(window.localStorage.getItem(`board${i}`));
+            const row = document.createElement("tr");
+            const Lp = document.createElement("td");
+            Lp.innerText = i;
 
-            button.addEventListener("click", ()=>{
-                game.running=true
-                console.log(game.start_time)
-                game.start_time = new Date().getTime() - game.start_time
-                console.log(game.start_time)
-                game.interval_timer = setInterval(updateTimer, 6)
-                document.getElementById("popupSave").style.display = "none"
-                window.localStorage.setItem(`board${i}`, JSON.stringify({
-                    name:document.getElementById(`saveInput${i}`).value!=''?document.getElementById(`saveInput${i}`).value:"Insert your name here",
-                    board:game.board,
-                    imageStartedId:game.imageStartedId,
-                    mode: game.mode,
-                    pos0:game.pos0,
-                    date:new Date().getTime(),
-                    start_time:new Date().getTime()-game.start_time}))
-            })
-            
-            Lp.innerText = i
-            nameCel.append(name)
-            name.value = state?state.name:"Insert your name here"
-            name.id = `saveInput${i}`
+            if (isSave) {
+                const button = createSaveButton(i);
+                const nameInput = createNameInput(state, i);
 
-            row.append(Lp, name, buttonCel)
-            document.getElementById("popupSaveTable").append(row)
-        }
-        document.getElementById("popupSave").style.display = "flex"
-    })
-    document.getElementById("loadButton").addEventListener("click", ()=>{
-        game.running= false
-        let time = ms2time(new Date().getTime() -game.start_time)
-        game.start_time = new Date().getTime() - game.start_time
-        updateTimer(time)
-        clearInterval(game.interval_timer)
-        document.getElementById("popupLoadTable").querySelectorAll("tr").forEach((row, index) => {
-            if (index > 0) {
-                row.remove();
+                row.append(Lp, nameInput, button);
+            } else {
+                const button = createLoadButton(state);
+                const name = createCell(state?.name || "NoName");
+                const mode = createCell(state ? `${state.mode}x${state.mode}` : "Null");
+                const time = createCell(state ? ms2time(state.start_time) : "Null");
+                const date = createCell(state ? ms2date(state.date) : "Null");
+
+                row.append(Lp, name, time, date, mode, button);
             }
-        });
-        for(let i =1;i<=3;i++){
-            let state = JSON.parse(window.localStorage.getItem("board"+i))
-            let row = document.createElement("tr")
-            let Lp = document.createElement("td")
-            let buttonCel = document.createElement("td")
-            let button = document.createElement("button")
-            let name = document.createElement("td")
-            let mode = document.createElement("td")
-            let time  = document.createElement("td")
-            let date = document.createElement("td")
 
-            date.innerText = state?ms2date(state.date):"Null"
-            mode.innerText = state?`${state.mode}x${state.mode}`:"Null"
-            time.innerText = state?ms2time(state.start_time):"Null"
-
-            buttonCel.append(button)
-            button.innerText = "Load"
-
-            button.addEventListener("click", ()=>{
-                document.getElementById("popupLoad").style.display = "none"
-                start_game()
-                
-                game.board = state.board
-                game.imageStartedId = state.imageStartedId
-                game.mode = state.mode
-                game.pos0 = state.pos0
-                game.start_time = new Date().getTime() - state.start_time
-                game.running = true
-                draw()
-            })
-            
-            Lp.innerText = i
-            
-            name.innerText = state?state.name:"NoName"
-
-            row.append(Lp, name,  time, date, mode,buttonCel,)
-            document.getElementById("popupLoadTable").append(row)
+            table.append(row);
         }
-        document.getElementById("popupLoad").style.display = "flex"
-    })
+    }
 
-    document.getElementById("imageScroll").scrollTo(game.dimensions, 0)
-    const arrowRight = document.getElementById("arrowRight")
-    const arrowLeft = document.getElementById("arrowLeft")
-    arrowLeft.addEventListener("click", () => {
-        let i = 0
-        let scrollInterval = setInterval(()=>{
-            if (i>=30){
-                clearInterval(scrollInterval)
-                if (game.imageId === 0){
-                game.imageId= game.images.length-1
-                document.getElementById("imageScroll").scrollTo(game.dimensions*game.images.length,0)
-                }else{
-                    game.imageId--
-            } 
-            }else{
-            document.getElementById("imageScroll").scrollBy(-game.dimensions/30, 0)
-            i++}
-        },10)
-               
-    })
-    arrowRight.addEventListener("click", () => {
+    function createSaveButton(index) {
+        const button = document.createElement("button");
+        button.innerText = "Save";
+        button.addEventListener("click", () => {
+            hidePopupAndResume("popupSave");
+            window.localStorage.setItem(`board${index}`, JSON.stringify({
+                name: document.getElementById(`saveInput${index}`).value || "Insert your name here",
+                board: game.board,
+                imageStartedId: game.imageStartedId,
+                mode: game.mode,
+                pos0: game.pos0,
+                date: new Date().getTime(),
+                start_time: new Date().getTime() - game.start_time
+            }));
+        });
+        const cell = document.createElement("td");
+        cell.append(button);
+        return cell;
+    }
+
+    function createLoadButton(state) {
+        const button = document.createElement("button");
+        button.innerText = "Load";
+        button.addEventListener("click", () => {
+            document.getElementById("popupLoad").style.display = "none";
+            start_game();
+            Object.assign(game, {
+                board: state.board,
+                imageStartedId: state.imageStartedId,
+                mode: state.mode,
+                pos0: state.pos0,
+                start_time: new Date().getTime() - state.start_time,
+                running: true
+            });
+            draw();
+        });
+        const cell = document.createElement("td");
+        cell.append(button);
+        return cell;
+    }
+
+    function createNameInput(state, index) {
+        const nameInput = document.createElement("input");
+        nameInput.value = state ? state.name : "Insert your name here";
+        nameInput.id = `saveInput${index}`;
+        const cell = document.createElement("td");
+        cell.append(nameInput);
+        return cell;
+    }
+
+    function createCell(content) {
+        const cell = document.createElement("td");
+        cell.innerText = content;
+        return cell;
+    }
+
+    document.getElementById("popupLoadButton").addEventListener("click", () => hidePopupAndResume("popupLoad"));
+    document.getElementById("popupSaveButton").addEventListener("click", () => hidePopupAndResume("popupSave"));
+
+    document.getElementById("saveButton").addEventListener("click", () => {
+        game.running = false;
+        const time = ms2time(new Date().getTime() - game.start_time);
+        updateTimer(time);
+        game.start_time = new Date().getTime() - game.start_time
+        clearInterval(game.interval_timer);
+        clearAndPopulateTable("popupSaveTable", true);
+        document.getElementById("popupSave").style.display = "flex";
+    });
+
+    document.getElementById("loadButton").addEventListener("click", () => {
+        game.running = false;
+        const time = ms2time(new Date().getTime() - game.start_time);
+        updateTimer(time);
+        game.start_time = new Date().getTime() - game.start_time
+        clearInterval(game.interval_timer);
+        clearAndPopulateTable("popupLoadTable", false);
+        document.getElementById("popupLoad").style.display = "flex";
+    });
+
+    document.getElementById("imageScroll").scrollTo(game.dimensions, 0);
+
+
+    function scrollImage(direction) {
         let i = 0;
-        let scrollInterval = setInterval(() => {
+        const scrollInterval = setInterval(() => {
             if (i >= 30) {
                 clearInterval(scrollInterval);
-                if (game.imageId === game.images.length - 1) {
-                    game.imageId = 0;
-                    document.getElementById("imageScroll").scrollTo(game.dimensions, 0);
-                } else {
-                    game.imageId++;
-                }
+                game.imageId = (game.imageId + direction + game.images.length) % game.images.length;
+                document.getElementById("imageScroll").scrollTo((game.imageId+1) * game.dimensions, 0);
             } else {
-                document.getElementById("imageScroll").scrollBy(game.dimensions / 30, 0);
+                document.getElementById("imageScroll").scrollBy(direction * game.dimensions / 30, 0);
                 i++;
             }
         }, 10);
-    });
+    }
+
+    document.getElementById("arrowLeft").addEventListener("click", () => scrollImage(-1));
+    document.getElementById("arrowRight").addEventListener("click", () => scrollImage(1));
 
     function checkWin() {
-        return game.board.every((arr, arrIndex) => {
-            return arr.every((tile, tileIndex) => {
-                if (arrIndex * game.mode + tileIndex === game.mode ** 2 - 1) {
-                    return true
-                }
-                if (tile.id === arrIndex * game.mode + tileIndex) {
-                    return true
-                }
-                return false
-            })
-        })
+        return game.board.every((row, y) =>
+            row.every((tile, x) =>
+                tile === 0 || tile.id === y * game.mode + x
+            )
+        );
     }
+
     function draw() {
         let table = document.getElementById("tabela")
         table.innerHTML = ''
@@ -228,6 +204,7 @@ window.onload = function() {
         }
         document.getElementById("App").append(table)
     }
+
     function prepare_board(n) {
         game.mode = n
         game.board = []
@@ -246,6 +223,7 @@ window.onload = function() {
         if (game.shuffle_int) clearInterval(game.shuffle_int)
         game.shuffle_int = setInterval(shuffle, 5)
     }
+
     function updateTimer(time = ms2time(new Date().getTime() - game.start_time)) {
         for (let i = 0; i < time.length; i++) {
             if ((i + 1) % 3 == 0 && i < 7) continue
@@ -256,6 +234,7 @@ window.onload = function() {
             }
         }
     }
+
     function start_game() {
         const timer_html = document.getElementById("timer")
         timer_html.innerHTML = ''
@@ -274,6 +253,7 @@ window.onload = function() {
         game.interval_timer = setInterval(updateTimer, 6)
 
     }
+
     function ms2time(time) {
         var pad = function (num, size) { return ('000' + num).slice(size * -1); },
             hours = Math.floor(time / 60 / 60 / 1000),
@@ -283,10 +263,12 @@ window.onload = function() {
 
         return pad(hours, 2) + ':' + pad(minutes, 2) + ':' + pad(seconds, 2) + '.' + pad(milliseconds, 3);
     }
+
     function ms2date(time) {
         data = new Date(time)
         return String(data.getDate()).padStart(2,"0")+'.'+String(data.getMonth()).padStart(2,"0")+'.'+String(data.getFullYear()).padStart(2,"0")
     }
+
     function shuffle() {
         pos0 = game.pos0
         const direcitons = [[0, -1], [-1, 0], [1, 0], [0, 1]]
@@ -307,11 +289,11 @@ window.onload = function() {
         }
 
     }
+
     for (let i = 3; i < 7; i++) {
-        let btn = document.getElementById("b" + i)
-        btn.addEventListener("click", () => { 
-            prepare_board(i)
-            game.running = true
-        })
+        document.getElementById("b" + i).addEventListener("click", () => {
+            prepare_board(i);
+            game.running = true;
+        });
     }
-}
+};
