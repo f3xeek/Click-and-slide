@@ -76,6 +76,7 @@ window.onload = function() {
         button.innerText = "Load";
         button.addEventListener("click", () => {
             document.getElementById("popupLoad").style.display = "none";
+            document.getElementById("saveButton").removeAttribute("disabled")
             start_game();
             Object.assign(game, {
                 board: state.board,
@@ -230,7 +231,7 @@ window.onload = function() {
             else if (i == 8) continue
             else {
                 let elem = document.getElementById(`c${i}`)
-                elem.setAttribute("src", `cyferki/c${time[i]}.gif`)
+                if (elem) elem.setAttribute("src", `cyferki/c${time[i]}.gif`)
             }
         }
     }
@@ -286,12 +287,15 @@ window.onload = function() {
             game.shuffle_int = null
             start_game()
             document.getElementById("saveButton").removeAttribute("disabled")
+            document.getElementById("loadButton").removeAttribute("disabled")
         }
 
     }
 
     for (let i = 3; i < 7; i++) {
         document.getElementById("b" + i).addEventListener("click", () => {
+            document.getElementById("saveButton").setAttribute("disabled", "disabled")
+            document.getElementById("loadButton").setAttribute("disabled", "disabled")
             prepare_board(i);
             game.running = true;
         });
